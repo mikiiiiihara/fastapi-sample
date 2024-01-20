@@ -1,33 +1,43 @@
+import os
 import requests
 import json
 import pandas as pd
 from typing import TypedDict, List, Optional
 
 class FundDataset(TypedDict):
-    fund_name: str
-    nav: int
+    fund_name: str # ファンドID
+    nav: int # 基準価格
+    cmp_prev_day: int # 前日比価格
+    percentage_change: int # 前月比率
+
 
 class ApiResponse(TypedDict):
     datasets: List[FundDataset]
 
-def fetch_data_from_api() -> Optional[ApiResponse]:
-    url = "https://developer.am.mufg.jp/fund_information_latest/fund_cd/253266"
+def fetch_data_from_api(id: int) -> Optional[ApiResponse]:
+    base_url = os.environ.get("MUFG_API_BASE_URL", "https://developer.am.mufg.jp")
+    url = f"{base_url}/fund_information_latest/fund_cd/{id}"
     response = requests.get(url)
     if response.status_code == 200:
         return json.loads(response.text)
     else:
         return None
 
-def process_data_with_pandas(data: ApiResponse) -> str:
+def process_data_with_pandas(data: ApiResponse) -> dict:
     if data and "datasets" in data:
         df = pd.DataFrame(data["datasets"])
-        fund_name = df.iloc[0]["fund_name"]
-        nav = df.iloc[0]["nav"]
-        return f"Fund Name: {fund_name}, NAV: {nav}"
+        fund = {
+            "id": "253266",  # IDは固定値または動的に設定
+            "fundName": df.iloc[0]["fund_name"],
+            "currentPrice": float(df.iloc[0]["nav"]),
+            "currentPriceGets": float(df.iloc[0]["cmp_prev_day"]),
+            "currentRate": float(df.iloc[0]["percentage_change"])
+        }
+        return fund
     else:
-        return "No data available"
+        return {"id": "", "fundName": "", "nav": 0.0}
 
-def resolve_hello(*_, name: str = "stranger") -> str:
-    data = fetch_data_from_api()
-    processed_data = process_data_with_pandas(data)
-    return f"Hello, {name}! {processed_data}"
+def resolve_hello(*_, id: int) -> dict:
+    data = fetch_data_from_api(id)
+    fund_data = process_data_with_pandas(data)
+    return fund_data

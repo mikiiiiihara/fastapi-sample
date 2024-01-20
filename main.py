@@ -10,8 +10,15 @@ query = QueryType()
 query.set_field("hello", resolve_hello)
 
 type_defs = """
+    type Fund {
+        id: Int
+        fundName: String
+        currentPrice: Float
+        currentPriceGets: Float
+        currentRate: Float
+    }
     type Query {
-        hello(name: String): String!
+        hello(id: Int!): Fund
     }
 """
 
