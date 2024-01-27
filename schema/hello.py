@@ -15,7 +15,10 @@ class ApiResponse(TypedDict):
     datasets: List[FundDataset]
 
 def fetch_data_from_api(id: int) -> Optional[ApiResponse]:
-    base_url = os.environ.get("MUFG_API_BASE_URL", "https://developer.am.mufg.jp")
+    base_url = os.environ.get("MUFG_API_BASE_URL")
+    if not base_url:
+        raise RuntimeError("MUFG_API_BASE_URL environment variable is not set")
+
     url = f"{base_url}/fund_information_latest/fund_cd/{id}"
     response = requests.get(url)
     if response.status_code == 200:
